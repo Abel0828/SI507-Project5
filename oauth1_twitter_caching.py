@@ -3,6 +3,7 @@ import webbrowser
 import json
 import secret_data # need properly formatted file, see example
 from datetime import datetime
+import csv
 
 ##### CACHING SETUP #####
 #--------------------------------------------------
@@ -109,13 +110,13 @@ CLIENT_KEY = secret_data.client_key # what Twitter calls Consumer Key
 CLIENT_SECRET = secret_data.client_secret # What Twitter calls Consumer Secret
 
 ### Specific to API URLs, not private
-REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
-BASE_AUTH_URL = "https://api.twitter.com/oauth/authorize"
-ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
+REQUEST_TOKEN_URL = "https://www.tumblr.com/oauth/request_token"
+BASE_AUTH_URL = "https://www.tumblr.com/oauth/authorize"
+ACCESS_TOKEN_URL = "https://www.tumblr.com/oauth/access_token"
 
 
 def get_tokens(client_key=CLIENT_KEY, client_secret=CLIENT_SECRET,request_token_url=REQUEST_TOKEN_URL,
-               base_authorization_url=BASE_AUTH_URL,access_token_url=ACCESS_TOKEN_URL,verifier_auto=True):
+               base_authorization_url=BASE_AUTH_URL,access_token_url=ACCESS_TOKEN_URL,verifier_auto=False):
     oauth_inst = requests_oauthlib.OAuth1Session(client_key,client_secret=client_secret)
 
     fetch_response = oauth_inst.fetch_request_token(request_token_url)
@@ -190,14 +191,40 @@ def get_data_from_api(request_url,service_ident, params_diction, expire_in_days=
                                                      resource_owner_secret=resource_owner_secret)
         # Call the get method on oauth instance
         # Work of encoding and "signing" the request happens behind the sences, thanks to the OAuth1Session instance in oauth_inst
-        resp = oauth_inst.get(request_url,params=params_diction)
+        blog_identifier=params_diction.pop('blog_identifier')
+        resp = oauth_inst.get(request_url.format(blog_identifier),params=params_diction)
         # Get the string data and set it in the cache for next time
         data_str = resp.text
         data = json.loads(data_str)
         set_in_data_cache(ident, data, expire_in_days)
     return data
 
-
+def to_csv(data,flag):
+    if flag=='followings':
+        f=open('followings.csv',w,encoding='utf-8')
+        writer=csv.DictWriter(f,fieldnames=['blog_title','unique_name','url','decription'],
+                                  extrasaction='ignore',delimiter=',',quotechar='"'))
+        writer.writeheader()
+        if 'errors' not in data:
+            for record in data['response'].get('blogs'):
+                row['blog_title']=record['title']
+                row['unique_name']=record['name']
+                row['url']=record['url']
+                row['decription']=record['description']
+                writer.writerow(row)
+        f.close()
+    else:
+        f=open('followings.csv',w,encoding='utf-8')
+        writer=csv.DictWriter(f,'followers.csv',fieldnames=['unique_name','url','recent_post'],
+                                  extrasaction='ignore',delimiter=',',quotechar='"'))
+        writer.writeheader()
+        if 'errors' not in data:
+            for record in data['response'].get('users'):
+                row['unique_name']=record['name']
+                row['url']=record['url']
+                row['recent_post']=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(record['updated'])))
+                writer.writerow(row)        
+        f.close()
 
 
 if __name__ == "__main__":
@@ -207,11 +234,13 @@ if __name__ == "__main__":
     if not REQUEST_TOKEN_URL or not BASE_AUTH_URL:
         print("You need to fill in this API's specific OAuth2 URLs in this file.")
         exit()
-
+    username=input("please enter your Tumblr username for me to generate your blog identifier: ")
+    tumblr_search_baseurl1='https://api.tumblr.com/v2/blog/{}/following'
+    tumblr_search_baseurl2='https://api.tumblr.com/v2/blog/{}/follower'
     # Invoke functions
-    twitter_search_baseurl = "https://api.twitter.com/1.1/search/tweets.json"
-    twitter_search_params = {'q':
-    "University of Michigan", "count":4}
-
-    twitter_result = get_data_from_api(twitter_search_baseurl,"Twitter",twitter_search_params) # Default expire_in_days
-    print(type(twitter_result))
+    tumblr_search_params = {'blog_identifier':'{}.tumblr.com'.format(username), "limit":100}
+    followings = get_data_from_api(tumblr_search_baseurl1,"Tumblr",tumblr_search_params) # Default expire_in_days
+    followers = get_data_from_api(tumblr_search_baseurl2,"Tumblr",tumblr_search_params)
+    to_csv(followings,'followings')
+    to_csv(followers,'followers')
+    print(type(followings))

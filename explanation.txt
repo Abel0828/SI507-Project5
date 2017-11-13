@@ -1,11 +1,14 @@
 Put your Project 5 brief explanation, as directed, here.
 
-I am accessing the Twitter search API and gathering:
-- I am going to search for 30 tumblr blogs for each of 2 NBA teams:
-Official Tumblr Feed for the Golden State Warriors
-Official Tumblr Feed for the Cleveland Cavaliers
-- For each blog, I'll be accessing the blog name, blog id, post url, blog type(text/photo/..) and post date
-- I'll write 2 CSV files, one for each team's search
-- Data in each CSV file: 4 columns -- blog_name,id,post_url,type,date
+I am accessing the Tumblr search API and gathering:
+- I am going to search for information of 100 most recent your Tumblr follwers and followings 
+- For each blog, I'll be accessing the 
+- I'll write 2 CSV files, one for followers and one for followings.
+- Data in each CSV file: 
+followings: 4 columns -- blog_title,name(blog username),url,decription
+followers: 4 columns -- name, url, recent_post(most recent post time)
 - URL for the API: <https://www.tumblr.com/docs/en/api/v2#hostname>
-- If necessary, URL describing the authentication process for the API: oauth1
+- If necessary, URL describing the authentication process for the API: 
+oauth1
+Note:The program will prompt you to enter your username, with should be the same account that you
+use to authenticate the program later.

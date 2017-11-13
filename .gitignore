@@ -1,4 +1,3 @@
 secret_data.py
+creds.json
 __pycache__/
-creds.txt
-cache_contents.txt
